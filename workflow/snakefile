@@ -208,16 +208,11 @@ rule setup:
 rule split_vcfs:
     input:
         inp = extract_from_sample("VCF_file_name", config["PATH_VCFS"])
-        #inp = "results/{sample}.vcf"
     output:
         out = "results/split_vcfs/{sample}.{num}.vcf"
     params:
         start = lambda wildcards: mut_dict[wildcards.sample+ "." + wildcards.num][0],
-        end = lambda wildcards: mut_dict[wildcards.sample+ "." + wildcards.num][1],
-        # start = mut_dict["{sample_tis}"][0],
-        # end = mut_dict["{sample}"][1],
-        #split_n = "{num}"
-        
+        end = lambda wildcards: mut_dict[wildcards.sample+ "." + wildcards.num][1],      
     script:
         "scripts/split_vcf.py"
 
@@ -226,8 +221,8 @@ rule split_vcfs:
 rule run_mupexi:
     threads: 1
     resources:
-        walltime="16:00:00",
-        mem_mb=20192
+        walltime="3:00:00",
+        mem_mb=8192
     conda:
         "envs/mupexi.yaml"
     input:
