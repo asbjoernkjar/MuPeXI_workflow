@@ -18,7 +18,7 @@ PATH_VEP: "/vep_sudo/sudo_vep"
 
 #HLA_CALLS
 
-# format of HLA calls tsv file "Sample_name	Caller	HLA_A1	HLA_A2	HLA_B1	HLA_B2	HLA_C1	HLA_C2"
+# format of HLA calls tsv file "Sample_ID	Caller	HLA_A1	HLA_A2	HLA_B1	HLA_B2	HLA_C1	HLA_C2"
 # format of hla calls: "HLA-A03:01" (4 digit resoltuion)
 
 HLA_CALLS: "consensus_calls.tsv"
@@ -36,7 +36,7 @@ TOLERANCE: 25 #recomended at least 25 to prevent crashes
 FRAGMENT_LENGTH: "9-11"
 OUTPUT_FASTA: false #output a fasta files with all peptides?
 
-# filtering the output - all outputfiles are filtered and merged (neoantigen included if 1 of the statements is true)
+# filtering the output - all outputfiles are filtered and merged (neoantigen included if 1 of the statements are true)
 # Note a file containing all neoantigens is also produced
 
 rankEL_thresh: 2  #filters out anything above
