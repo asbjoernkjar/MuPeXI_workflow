@@ -1,0 +1,16 @@
+---
+# config file for the job execution on cluster 
+
+__default__:
+    account: "CancerEvolution"
+    cpus-per-task: "{threads}"
+    time: "{resources.walltime}"
+    mem: "{resources.mem_mb}"
+    
+    output: "logs/{rule}-%j.out"
+    #output: "logs/{rule}.out"
+
+    error: "logs/{rule}-%j.err"
+    #error: "logs/{rule}.err"
+...
+

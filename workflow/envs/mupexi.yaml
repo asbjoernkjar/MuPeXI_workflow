@@ -1,0 +1,11 @@
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+ - python = 2.7
+ - numpy
+ - pandas
+ - biopython
+ - tabix
+ - psutil
+ - ensembl-vep=104.3

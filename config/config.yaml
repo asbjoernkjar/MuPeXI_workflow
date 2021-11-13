@@ -1,0 +1,43 @@
+#PATHS
+
+#NOTE dots '.' in sample names will potentialy cause problems with the workflow
+
+
+PATH_VCFS: "" #to folder had to end with /
+SAMPLE_FILE: "samples_mupexi.tsv"
+
+#cDNA from ensemble (version should match VEP!!!!!)
+PATH_CDNA: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.cdna.all.fa"
+PATH_PEP: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.pep.all.fa"
+#cosmic cancer driver genes
+PATH_COSMIC: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Census_all20211007.tsv"
+
+#path to .vep folder with homo_sapiens_vep_104_GRCh38 vep cache file (can be installed via VEP)
+PATH_VEP_CACHE: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/.vep"
+PATH_VEP: "/vep_sudo/sudo_vep"
+
+#HLA_CALLS
+
+# format of HLA calls tsv file "Sample_name	Caller	HLA_A1	HLA_A2	HLA_B1	HLA_B2	HLA_C1	HLA_C2"
+# format of hla calls: "HLA-A03:01" (4 digit resoltuion)
+
+HLA_CALLS: "consensus_calls.tsv"
+CALLER: "CONSENSUS_VOTE"
+
+
+#### SPLITING VCF FILES FOR SMOOTHER RUNS ####
+
+SPLIT_VCFS: true
+SPLIT_SIZE: 100
+TOLERANCE: 25 #recomended at least 25 to prevent crashes
+
+### MUPEXI OPTIONS ###
+
+FRAGMENT_LENGTH: "9-11"
+OUTPUT_FASTA: false #output a fasta files with all peptides?
+
+# filtering the output - all outputfiles are filtered and merged (neoantigen included if 1 of the statements is true)
+# Note a file containing all neoantigens is also produced
+
+rankEL_thresh: 2  #filters out anything above
+BA_thresh: 500  #filters out anything below 

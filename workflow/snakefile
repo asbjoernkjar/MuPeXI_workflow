@@ -1,0 +1,306 @@
+import os
+import pandas as pd
+configfile: "config/config.yaml"
+
+if not os.path.isdir("logs"):
+    os.mkdir("logs")
+if not os.path.isdir("results"):
+    os.mkdir("results")
+if not os.path.isdir("results/mupexi_results"):
+    os.mkdir("results/mupexi_results")
+
+sample_df = pd.read_csv(config["SAMPLE_FILE"], sep = "\t", dtype = str)
+sample_df  = sample_df.dropna()
+original_sample_list = sample_df["Sample_ID"].to_list()
+
+HLA_CALLS = pd.read_csv(config["HLA_CALLS"], sep="\t")
+
+
+###  setup and cleanup
+ 
+onstart:
+    if not os.path.isdir("results"):
+        os.mkdir("results")
+    os.system("mkdir -p logs/old; mv logs/*.{err,out} logs/old 2> /dev/null") #move logs, for convinience 
+
+
+
+#### SUBSET RUN ##############################
+#sample_list = sample_list[0:3]
+#sample_df = sample_df[0:3]
+
+
+
+############ FUNCTIONS FOR GETTING FILES ########
+def extract_from_sample(col_name , suffix = ""):
+    """
+    Function that can extract a datapoint from samples.tsv
+    col_name specifies column
+    Inner function then excract a the row where {sample} is located
+    """
+    def input_func(wildcards):
+        return suffix + sample_df.loc[sample_df['Sample_ID'] == wildcards.sample, col_name].iloc[0] 
+    return input_func
+
+
+
+def get_HLA_alleles(wildcards):
+    return ",".join(HLA_CALLS[ (HLA_CALLS["Sample_ID"] == wildcards.sample) & (HLA_CALLS["Caller"] == config["CALLER"]) ].iloc[0,:].values[2:8]) 
+
+
+############ GENERATE SPLIT FILE LISTS ###########
+# These function finds amount of passed mutations in each file
+# Then creates a tsv file that describes the splitting of these files
+# this code is run on local node
+
+def generate_split_list(sample_df, vcf_folder, out_path, split_size, tolerance):
+
+    out = open(out_path, "w")
+    n_row = sample_df.shape[0]
+    for _,row in sample_df.iterrows():   
+        sample,file_name = row["Sample_ID"], row["VCF_file_name"]
+        
+        f = open(vcf_folder+file_name, "r")
+        n= 0
+
+        for line in f.readlines():
+            if line[0] != "#":
+                line = line.split("\t")
+                if line[6] == "PASS":
+                    n+=1  
+        f.close()
+
+        print("Generating split list for sample: ",_ +1 ,f"out of {n_row}, with {n} passed mutations")
+        out_list = []  #sample, sample.x, start, stop    (stop is non inclusive)
+        n_left = n
+        split = 0
+        while n_left > split_size + tolerance:
+
+            out_list.append([sample, sample+f".{split}", str(split_size*split), str(split_size*(split+1))])
+            split += 1
+            n_left -= split_size
+        #adding last split
+        out_list.append([sample, sample+f".{split}", str(split_size*split), str(n+1) ])
+        for line in out_list:
+
+            out.write("\t".join(line) + "\n")
+    out.close()
+
+def read_split_list(path):
+    sample_list = []
+    mut_dict = {}
+    split_dict = {}
+
+    f = open(path, "r")
+
+    for line in f.readlines():
+        line=line.strip().split("\t")
+        sample = line[0]
+        split_sample = line[1]
+        start, stop = line[2],line[3]
+
+        sample_list.append(split_sample)
+        mut_dict[split_sample] = [start, stop]
+        
+        split_dict[split_sample] = sample
+    return sample_list, mut_dict , split_dict
+
+
+
+
+ 
+
+
+if config["SPLIT_VCFS"]: #we want to split
+
+    #check if source VCFs has been modified since generating split_list.tsv
+    modified = False
+    if os.path.exists("results/split_list.tsv"):
+        for vcf_file in sample_df["VCF_file_name"].to_list():
+            if os.path.getmtime(config["PATH_VCFS"] + vcf_file) > os.path.getmtime("results/split_list.tsv"):
+                modified = True
+    #create split_list if not reated or vcfs has been modified
+    if modified or not os.path.exists("results/split_list.tsv"): #modified VCFs or file doesn't exist yet
+        generate_split_list(sample_df, config["PATH_VCFS"], "results/split_list.tsv", config["SPLIT_SIZE"], config["TOLERANCE"])
+
+    #Loading the split list (old or new)
+    sample_list, mut_dict , split_dict = read_split_list("results/split_list.tsv")
+
+    #input for MuPeXI rule
+    mupexi_vcf_inp = "results/split_vcfs/{sample}.{num}.vcf"
+    mupexi_out = "results/mupexi_results/{sample}.{num}.mupexi"
+    sample_name = "{sample}.{num}"
+
+else: #we don't split
+    #input for MuPeXI rule is a bit different 
+    sample_list  = original_sample_list
+    split_size = None
+    split_dict = {}
+    for sample in sample_list:
+        split_dict[sample] = sample
+
+    
+    mupexi_vcf_inp = extract_from_sample("VCF_file_name", config["PATH_VCFS"])
+    mupexi_out = "results/mupexi_results/{sample}.mupexi"
+    sample_name = "{sample}"
+
+
+
+
+localrules: all, setup #,split_vcfs
+
+rule all:
+    input:
+        "results/neoantigens_filtered.tsv",
+        "results/neoantigens_full.tsv"
+
+
+rule setup:	
+    resources:
+        walltime="0:10:00",
+    input:
+        "MuPeXI/config.ini",
+        "netMHCpan-4.1/netMHCpan"
+    output:
+        "MuPeXI/config_conf.ini",
+        "netMHCpan-4.1/netMHCpan_conf"
+    params:
+        cdna = config["PATH_CDNA"],
+        pep = config["PATH_PEP"],
+        cosmic = config["PATH_COSMIC"],
+        vep = config["PATH_VEP"],
+        vep_cache = config["PATH_VEP_CACHE"]
+
+    shell: """
+        work_dir=${{PWD}}
+        echo "Script executed from: $work_dir"
+        sed -e "s+/net/sund-nas.win.dtu.dk/storage/services/www/packages/netMHCpan/4.1/netMHCpan-4.1+$work_dir/netMHCpan-4.1/+g" \
+            -e 's+/tmp+$NMHOME/tmp+g' \
+            netMHCpan-4.1/netMHCpan > netMHCpan-4.1/netMHCpan_conf
+        mkdir -p netMHCpan-4.1/tmp
+
+        chmod ugo+rwx netMHCpan-4.1/netMHCpan_conf
+
+        sed -e "s+/your/path/to/netmhcpan/4.0a/netMHCpan+$work_dir/netMHCpan-4.1/netMHCpan_conf+g" \
+            -e "s+/your/path/to/ensembl-vep/release-95.1/vep+{params.vep}+g" \
+            -e "s+/your/path/to/databases/variant_effect_predictor/.vep+{params.vep_cache}+g" \
+            -e "s+/your/path/to/human_GRCh38/cDNA/Homo_sapiens.GRCh38.95.cdna.all.fa+{params.cdna}+g" \
+            -e "s+/your/path/to/human_GRCh38/pep/Homo_sapiens.GRCh38.95.pep.all.fa+{params.pep}+g" \
+            -e "s+/your/path/to/human_GRCh38/cosmic/Census_allWed_Feb_17_09-33-40_2016.tsv+{params.cosmic}+g" \
+            -e "s+/your/path/to/MuPeXI/bin/pepmatch_db_x86_64+$work_dir/MuPeXI/bin/pepmatch_db_x86_64+g" \
+            MuPeXI/config.ini > MuPeXI/config_conf.ini	
+        """
+
+
+#this does not seem to work on a node. but calling the command on base node works 
+# rule download_vep:
+# 	resources:
+# 		walltime="4:00:00", #just in case
+# 	conda:
+# 		"envs/mupexi.yaml"
+# 	output:
+# 		"vep/.vep"
+# 	shell: """
+# 		vep_install -a cf -s homo_sapiens -y GRCh38 -c vep/.vep --CACHE_VERSION 104 --CONVERT
+# 	"""
+
+
+rule split_vcfs:
+    input:
+        inp = extract_from_sample("VCF_file_name", config["PATH_VCFS"])
+        #inp = "results/{sample}.vcf"
+    output:
+        out = "results/split_vcfs/{sample}.{num}.vcf"
+    params:
+        start = lambda wildcards: mut_dict[wildcards.sample+ "." + wildcards.num][0],
+        end = lambda wildcards: mut_dict[wildcards.sample+ "." + wildcards.num][1],
+        # start = mut_dict["{sample_tis}"][0],
+        # end = mut_dict["{sample}"][1],
+        #split_n = "{num}"
+        
+    script:
+        "scripts/split_vcf.py"
+
+
+
+rule run_mupexi:
+    threads: 1
+    resources:
+        walltime="16:00:00",
+        mem_mb=20192
+    conda:
+        "envs/mupexi.yaml"
+    input:
+        "netMHCpan-4.1/netMHCpan_conf",
+        conf_file = "MuPeXI/config_conf.ini",
+        vcf_file =  mupexi_vcf_inp # "MuPeXI/data/example.vcf",
+        
+    params:
+        HLA_alleles = get_HLA_alleles,
+        out_dir = "results/mupexi_results/",  #"results/{sample}/"
+        fragment_len = config["FRAGMENT_LENGTH"],
+        sample_name = sample_name,
+        make_fasta = "--make-fasta" if config["OUTPUT_FASTA"] else ""
+    output:
+        out = mupexi_out,
+    shell:"""
+        MuPeXI/MuPeXI_4.1.py \
+        -v {input.vcf_file} \
+        -a {params.HLA_alleles} \
+        -c {input.conf_file} \
+        -p {params.sample_name} \
+        -d {params.out_dir}\
+        --netmhc-full-anal \
+        {params.make_fasta} \
+        -M\
+        -l {params.fragment_len} \
+        --fork {threads} \
+    """
+
+
+
+rule merge_results:
+    #takes the individual call files and stores them in dataframe
+    #using a treshold to reduce size
+    resources:
+        walltime="2:00:00",
+        mem_mb=16384
+    input:
+        file_list = expand("results/mupexi_results/{sample}.mupexi", sample = sample_list)
+    output:
+        output_file ="results/neoantigens_filtered.tsv",
+    params:
+        sample_list = sample_list,
+        rankEL_thresh = config["rankEL_thresh"],
+        BA_thresh = config["BA_thresh"],
+        split_dict = split_dict
+    script:
+        "scripts/merge_results.py"
+
+
+
+rule merge_results_full:
+    #takes the individual call files and stores them in dataframe
+    #assembles all files to one BIG file
+    #this can take a long time for very large workflows
+    #NOTE loads all files into memory. For very large workflows consider doing this manually without loading
+    resources:
+        walltime="12:00:00",
+        mem_mb=128000
+    input:
+        file_list = expand("results/mupexi_results/{sample}.mupexi", sample = sample_list)
+    output:
+        output_file ="results/neoantigens_full.tsv",
+    params:
+        sample_list = sample_list,
+        rankEL_thresh = 101,
+        BA_thresh = 99999999999999,
+        split_dict = split_dict
+    script:
+        "scripts/merge_results.py"
+
+
+
+
+
+
