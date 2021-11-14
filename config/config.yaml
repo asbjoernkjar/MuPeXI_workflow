@@ -14,7 +14,7 @@ PATH_COSMIC: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/re
 
 #path to .vep folder with homo_sapiens_vep_104_GRCh38 vep cache file (can be installed via VEP)
 PATH_VEP_CACHE: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/.vep"
-PATH_VEP: "/sudo_vep/sudo_vep"
+PATH_VEP: "sudo_vep/sudo_vep"
 
 #HLA_CALLS
 
