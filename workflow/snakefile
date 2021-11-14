@@ -13,7 +13,7 @@ sample_df = pd.read_csv(config["SAMPLE_FILE"], sep = "\t", dtype = str)
 sample_df  = sample_df.dropna()
 original_sample_list = sample_df["Sample_ID"].to_list()
 
-HLA_CALLS = pd.read_csv(config["HLA_CALLS"], sep="\t")
+HLA_CALLS = pd.read_csv(config["HLA_CALLS"], sep="\t" , dtype = str)
 
 
 ###  setup and cleanup ###
@@ -53,7 +53,7 @@ def generate_split_list(sample_df, vcf_folder, out_path, split_size, tolerance):
     out = open(out_path, "w")
     n_row = sample_df.shape[0]
     for _,row in sample_df.iterrows():   
-        sample,file_name = row["Sample_ID"], row["VCF_file_name"]
+        sample,file_name = row["Sample_ID"], row["Vcf_file_name"]
         
         f = open(vcf_folder+file_name, "r")
         n= 0
@@ -111,7 +111,7 @@ if config["SPLIT_VCFS"]: #we want to split
     #check if source VCFs has been modified since generating split_list.tsv
     modified = False
     if os.path.exists("results/split_list.tsv"):
-        for vcf_file in sample_df["VCF_file_name"].to_list():
+        for vcf_file in sample_df["Vcf_file_name"].to_list():
             if os.path.getmtime(config["PATH_VCFS"] + vcf_file) > os.path.getmtime("results/split_list.tsv"):
                 modified = True
     #create split_list if not reated or vcfs has been modified
@@ -135,7 +135,7 @@ else: #we don't split
         split_dict[sample] = sample
 
     
-    mupexi_vcf_inp = extract_from_sample("VCF_file_name", config["PATH_VCFS"])
+    mupexi_vcf_inp = extract_from_sample("Vcf_file_name", config["PATH_VCFS"])
     mupexi_out = "results/mupexi_results/{sample}.mupexi"
     sample_name = "{sample}"
 
@@ -202,7 +202,7 @@ rule setup:
 
 rule split_vcfs:
     input:
-        inp = extract_from_sample("VCF_file_name", config["PATH_VCFS"])
+        inp = extract_from_sample("Vcf_file_name", config["PATH_VCFS"])
     output:
         out = "results/split_vcfs/{sample}.{num}.vcf"
     params:
