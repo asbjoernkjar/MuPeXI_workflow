@@ -3,8 +3,8 @@
 #NOTE dots '.' in sample names will potentialy cause problems with the workflow
 
 
-PATH_VCFS: "" #to folder had to end with /
-SAMPLE_FILE: "samples_mupexi.tsv"
+PATH_VCFS: "/somwhere/over/the/rainbow/" #to folder had to end with /
+SAMPLE_FILE: "Sample_file.tsv"
 
 #cDNA from ensemble (version should match VEP!!!!!)
 PATH_CDNA: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.cdna.all.fa"
@@ -28,8 +28,8 @@ CALLER: "CONSENSUS_VOTE"
 #### SPLITING VCF FILES FOR SMOOTHER RUNS ####
 
 SPLIT_VCFS: true
-SPLIT_SIZE: 100
-TOLERANCE: 25 #recomended at least 25 to prevent crashes
+SPLIT_SIZE: 200
+TOLERANCE: 100 #recomended at least 25 to prevent crashes
 
 ### MUPEXI OPTIONS ###
 
