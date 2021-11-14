@@ -16,18 +16,13 @@ original_sample_list = sample_df["Sample_ID"].to_list()
 HLA_CALLS = pd.read_csv(config["HLA_CALLS"], sep="\t")
 
 
-###  setup and cleanup
+###  setup and cleanup ###
  
 onstart:
     if not os.path.isdir("results"):
         os.mkdir("results")
     os.system("mkdir -p logs/old; mv logs/*.{err,out} logs/old 2> /dev/null") #move logs, for convinience 
 
-
-
-#### SUBSET RUN ##############################
-#sample_list = sample_list[0:3]
-#sample_df = sample_df[0:3]
 
 
 
@@ -221,7 +216,7 @@ rule split_vcfs:
 rule run_mupexi:
     threads: 1
     resources:
-        walltime="3:00:00",
+        walltime="5:00:00",
         mem_mb=8192
     conda:
         "envs/mupexi.yaml"
@@ -232,7 +227,7 @@ rule run_mupexi:
         
     params:
         HLA_alleles = get_HLA_alleles,
-        out_dir = "results/mupexi_results/",  #"results/{sample}/"
+        out_dir = "results/mupexi_results",  
         fragment_len = config["FRAGMENT_LENGTH"],
         sample_name = sample_name,
         make_fasta = "--make-fasta" if config["OUTPUT_FASTA"] else ""
@@ -244,10 +239,10 @@ rule run_mupexi:
         -a {params.HLA_alleles} \
         -c {input.conf_file} \
         -p {params.sample_name} \
-        -d {params.out_dir}\
+        -d {params.out_dir} \
         --netmhc-full-anal \
         {params.make_fasta} \
-        -M\
+        -M \
         -l {params.fragment_len} \
         --fork {threads} \
     """
