@@ -8,11 +8,15 @@ def split_vcf(in_path,out_path, start, end):
     #end non inclusive
 
     big_vcf = open(in_path, "r")
+    lines = big_vcf.readlines()
+    big_vcf.close()
     out = open(out_path, "w")
     start, end = int(start), int(end)
     
     c = 1
-    print(start, end)
+    print("splitting to sample:", out_path)
+    print("interval:" , start, end)
+    
 
     for line in big_vcf.readlines():
         if line[0] == "#":
@@ -27,7 +31,9 @@ def split_vcf(in_path,out_path, start, end):
                 out.write(line)
             
             c += 1
-
+    print("ended at:", c)
+    print()
+    out.close()
 
 
 if __name__ == "__main__":
