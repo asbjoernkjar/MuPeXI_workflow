@@ -18,7 +18,7 @@ def split_vcf(in_path,out_path, start, end):
     print("interval:" , start, end)
     
 
-    for line in big_vcf.readlines():
+    for line in lines:
         if line[0] == "#":
             out.write(line)
             continue
