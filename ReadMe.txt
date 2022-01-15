@@ -6,7 +6,7 @@ Only mutations with PASS filter are used (manually change to PASS for inclusion)
 
 Results are merged into two files (see below)
 File with all neoantigens
-Files with neoantigens filtered based on RankEL or BA (for easier handling)
+Files with neoantigens filtered based on RankEL and/or BA (for easier handling)
 
 netMHCpan4.1b is used for ranking neoantigens
 MuPeXI updated to run with netMHCpan4.1b is used to extract neoantigens
@@ -26,9 +26,9 @@ They will be setup automatically
 ###### RUNNING THE PIPELINE #######
 
 As any snakemake workflow (tested for 6.8.0)
-Snakemake –profile config/slurm -j10
+Snakemake –-profile your/profile -j10
 
-Note  change account in config/slurm/cluster.yaml
+Note setup a profile from https://github.com/Snakemake-Profiles
 
 ###### Setting up the Pipeline #######
 
@@ -63,16 +63,15 @@ NOTE: THE VERSION SHOULD MATCH VEP VERSION (104)
 
 The samples are specified by csv file. It should have the following columns:
 Sample_ID --> Name of samples, will be used as output names
-VCF_file_name --> Name of the bam file for that sample. 
-	PATH_VCFS + bam_file_name is used to access files
-Race --> race of individual {Caucasian, Black, Asian, Unknown}
-	If there is no Race column Unknown is used by default 
+Vcf_file_name --> Name of the bam file for that sample. 
+	PATH_VCFS + Vcf_file_name is used to access files
+
 
 NOTE --> the pipeline drops any row with a NA value in any col!!!
 
 ### HLA_CALLS ###
 
-CSV file with HLA calls in correct 4-digit format: (HLA-A03:01)
+TSV file with HLA calls in correct 4-digit format: (HLA-A03:01)
 The file should have 8 columns:
 Sample_ID --> Name of samples (same as in Sample_file)
 Caller --> Name of caller used --> config specifies which caller to use
@@ -81,11 +80,11 @@ HLA_A1, HLA_A2, HLA_B1, HLA_B2, HLA_C1, HLA_C2 --> with HLA calls
 ### SPLIT VCFS ###
 
 MuPeXI can take a very long time to run with large vcf files. (>9H for 5000 mutations)
-This time seems to increase non-linearly
+This runtime seems to increase non-linearly
 This workflow can split VCF files into smaller subfiles and run on these.
 NOTE this will filter out any non PASS mutations
 SPLIT_SIZE describes size of vcf files
-TOLERANCE describes the smallest VCF file allowed
+TOLERANCE describes the smallest VCF file allowed to be created by a split
 MuPeXI WILL CRASH if no protein altering mutations are found
 Having high tolerance should fix this problem
 
