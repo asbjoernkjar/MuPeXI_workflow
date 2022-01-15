@@ -3,10 +3,10 @@
 #NOTE dots '.' in sample names will potentialy cause problems with the workflow
 
 
-PATH_VCFS: "/somwhere/over/the/rainbow/" #to folder had to end with /
+PATH_VCFS: "/somwhere/over/the/rainbow/" #to folder has to end with /
 SAMPLE_FILE: "Sample_file.tsv"
 
-#cDNA from ensemble (version should match VEP!!!!!)
+#cDNA from ensemble (version should match VEP!!!!! (104))
 PATH_CDNA: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.cdna.all.fa"
 PATH_PEP: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.pep.all.fa"
 #cosmic cancer driver genes
@@ -30,6 +30,7 @@ CALLER: "CONSENSUS_VOTE"
 SPLIT_VCFS: true
 SPLIT_SIZE: 200
 TOLERANCE: 100 #recomended at least 25 to prevent crashes
+               #Tolerance is the smallest vcf file allowed
 
 ### MUPEXI OPTIONS ###
 
@@ -39,5 +40,7 @@ OUTPUT_FASTA: false #output a fasta files with all peptides?
 # filtering the output - all outputfiles are filtered and merged (neoantigen included if 1 of the statements are true)
 # Note a file containing all neoantigens is also produced
 
-rankEL_thresh: 2  #filters out anything above
-BA_thresh: 500  #filters out anything below 
+rankEL_thresh: 2  #removes anything above
+BA_thresh: 500  #removest anything above
+#set a threshold to 0, to only use the other threshold 
+
