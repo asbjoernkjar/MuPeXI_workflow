@@ -6,7 +6,7 @@
 PATH_VCFS: "/somwhere/over/the/rainbow/" #to folder has to end with /
 SAMPLE_FILE: "Sample_file.tsv"
 
-#cDNA from ensemble (version should match VEP!!!!! (104))
+#cDNA from ensemble (version should match VEP!!!!! (104.3))
 PATH_CDNA: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.cdna.all.fa"
 PATH_PEP: "/faststorage/project/CancerEvolution/Projects/asbjorn_nags/data/refs/Homo_sapiens.GRCh38.pep.all.fa"
 #cosmic cancer driver genes
