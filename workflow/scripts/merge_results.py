@@ -14,7 +14,7 @@ def merging(df_list, sample_list, split_dict, output, rankEL_thresh, BA_thresh):
         print(sample_name,mupexi_df ,"whith unfiltered shape:", tem_df.shape)
         tem_df = tem_df[ ((tem_df[aff] < BA_thresh) | (tem_df[rankEL] < rankEL_thresh)) ]
         print("filtered:", tem_df.shape)
-        tem_df["Sample"] = split_dict[sample_name] #remapping split samples back to original sample name    x.1, x.2 --> x
+        tem_df["Sample_ID"] = split_dict[sample_name] #remapping split samples back to original sample name    x.1, x.2 --> x
 
         if master_DF is None:
             master_DF = tem_df
